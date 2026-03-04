@@ -10,6 +10,7 @@
 [![GitHub stars](https://img.shields.io/github/stars/firekid-is-him/hurl?style=flat-square&logo=github&logoColor=white&color=FACC15)](https://github.com/firekid-is-him/hurl/stargazers)
 [![GitHub forks](https://img.shields.io/github/forks/firekid-is-him/hurl?style=flat-square&logo=github&logoColor=white&color=8B5CF6)](https://github.com/firekid-is-him/hurl/network/members)
 [![CI](https://img.shields.io/github/actions/workflow/status/firekid-is-him/hurl/ci.yml?style=flat-square&logo=githubactions&logoColor=white&label=CI)](https://github.com/firekid-is-him/hurl/actions)
+[![Website](https://img.shields.io/badge/website-hurl.firekidofficial.name.ng-black?style=flat-square&logo=googlechrome&logoColor=white)](https://hurl.firekidofficial.name.ng)
 
 A modern HTTP client for Node.js and edge runtimes.  
 Zero dependencies. Full TypeScript support. Under 3KB gzipped.
