@@ -1,0 +1,7 @@
+node_modules
+dist
+dist_cjs
+dist_esm
+*.js.map
+.DS_Store
+coverage
