@@ -69,6 +69,14 @@ function buildBody(body: unknown): BodyInit | undefined {
   return JSON.stringify(body)
 }
 
+function isTimeoutAbort(err: unknown, timedOut: boolean): boolean {
+  if (timedOut) return true
+  const e = err as any
+  if (e?.name === 'TimeoutError') return true
+  if (e?.name === 'AbortError' && e?.message?.includes('timeout')) return true
+  return false
+}
+
 export async function executeRequest<T>(
   url: string,
   options: HurlRequestOptions,
@@ -102,6 +110,7 @@ export async function executeRequest<T>(
   }
 
   const deduplicate = options.deduplicate ?? defaults.deduplicate ?? false
+
   if (deduplicate && method === 'GET') {
     const inflight = getInFlight(fullUrl)
     if (inflight) return inflight as Promise<HurlResponse<T>>
@@ -110,18 +119,20 @@ export async function executeRequest<T>(
   if (debug) debugRequest(fullUrl, { ...options, method })
 
   const run = async (attempt: number): Promise<HurlResponse<T>> => {
-    const controllers: AbortController[] = []
     let timeoutId: ReturnType<typeof setTimeout> | null = null
+    let timedOut = false
 
     const controller = new AbortController()
-    controllers.push(controller)
 
     if (options.signal) {
       options.signal.addEventListener('abort', () => controller.abort())
     }
 
     if (timeout) {
-      timeoutId = setTimeout(() => controller.abort('timeout'), timeout)
+      timeoutId = setTimeout(() => {
+        timedOut = true
+        controller.abort()
+      }, timeout)
     }
 
     try {
@@ -135,7 +146,7 @@ export async function executeRequest<T>(
 
       if (timeoutId) clearTimeout(timeoutId)
 
-      const data = await parseResponseBody(response, requestId, options.onDownloadProgress) as T
+      const data = await parseResponseBody(response, requestId, options.onDownloadProgress, method) as T
 
       if (!response.ok) {
         throw buildHttpError({
@@ -164,10 +175,9 @@ export async function executeRequest<T>(
 
       if (err instanceof HurlError) {
         hurlError = err
-      } else if ((err as Error).name === 'AbortError') {
-        const isTimeout = timeout && (err as Error).message === 'timeout'
-        hurlError = isTimeout
-          ? buildTimeoutError(timeout, requestId)
+      } else if ((err as Error).name === 'AbortError' || (err as Error).name === 'TimeoutError') {
+        hurlError = isTimeoutAbort(err, timedOut)
+          ? buildTimeoutError(timeout ?? 0, requestId)
           : buildAbortError(requestId)
       } else {
         hurlError = buildNetworkError((err as Error).message, requestId)
