@@ -151,15 +151,18 @@ export async function executeRequest<T>(
     let timedOut = false
 
     const controller = new AbortController()
+    
+    // FIX: Extracted signal to a local constant to fix TS18048 closure warning
+    const signal = options.signal
 
     // FIX: Check if the signal is already aborted before attaching the listener to prevent hanging retries
     let abortListener: (() => void) | null = null
-    if (options.signal) {
-      if (options.signal.aborted) {
-        controller.abort(options.signal.reason)
+    if (signal) {
+      if (signal.aborted) {
+        controller.abort(signal.reason)
       } else {
-        abortListener = () => controller.abort(options.signal.reason)
-        options.signal.addEventListener('abort', abortListener)
+        abortListener = () => controller.abort(signal.reason)
+        signal.addEventListener('abort', abortListener)
       }
     }
 
@@ -255,8 +258,9 @@ export async function executeRequest<T>(
       throw hurlError
     } finally {
       if (timeoutId) clearTimeout(timeoutId)
-      if (abortListener && options.signal) {
-        options.signal.removeEventListener('abort', abortListener)
+      // FIX: Check against our constant instead of options.signal
+      if (abortListener && signal) {
+        signal.removeEventListener('abort', abortListener)
       }
     }
   }
