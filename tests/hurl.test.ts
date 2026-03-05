@@ -1,4 +1,5 @@
 // Listen: i don't have time to say all ehat i did here with comments, just know i made important updates
+// What i did is: A properly mocked fetch test suite that guarantees hurl actually behaves as advertised.
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import hurl, { HurlError, createInstance, clearCache } from '../src/index'
